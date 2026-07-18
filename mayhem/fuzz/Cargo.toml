@@ -1,0 +1,27 @@
+[package]
+name = "substrate-fuzz"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+
+[dependencies.sp-arithmetic]
+path = "../../primitives/arithmetic"
+default-features = false
+features = ["std"]
+
+[[bin]]
+name = "fuzz_arithmetic"
+path = "fuzz_targets/fuzz_arithmetic.rs"
+test = false
+doc = false
+
+# Standalone fuzz workspace — do NOT pull in the entire substrate workspace.
+[workspace]
+resolver = "2"
+members = ["."]

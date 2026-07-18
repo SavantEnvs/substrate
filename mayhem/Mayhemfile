@@ -1,0 +1,19 @@
+# libFuzzer target — substrate sp-arithmetic harness.
+# libfuzzer: true -> Mayhem drives the in-process libFuzzer entry point.
+# Binary built + copied to /mayhem/fuzz_arithmetic by mayhem/build.sh.
+project: savantenvs/substrate
+target: fuzz_arithmetic
+duration: 300
+
+cmds:
+  - cmd: /mayhem/fuzz_arithmetic
+    libfuzzer: true
+
+# Seeds are wired via the sanctioned two-entry form (docs/seed-corpus.md): the server-tar
+# ACCUMULATES the corpus across runs (fixes #124 — no re-seed/freeze), and the local file://
+# entry loads the starter seeds on a cold run. The previous note was wrong: the default corpus
+# handler reads a package-root ./testsuite, NOT mayhem/seeds/, so the bootstrap seeds were never
+# loaded until relocated to the canonical mayhem/fuzz_arithmetic/testsuite path below.
+testsuite:
+  - https://$MAYHEM_DOMAIN/$MAYHEM_PROJECT/$MAYHEM_TARGET/testsuite.tar
+  - file://mayhem/fuzz_arithmetic/testsuite
