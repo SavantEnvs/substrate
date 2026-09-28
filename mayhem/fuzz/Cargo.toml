@@ -1,0 +1,72 @@
+[package]
+name = "substrate-fuzz"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+
+# zerocopy versions newer than this add x86-64 AVX-512 impls gated on the unstable
+# `stdarch_x86_avx512` feature, which the pinned nightly-2025-05-14 toolchain does not
+# have enabled — pin below that to keep the workspace building on the pinned nightly.
+zerocopy = "=0.8.20"
+
+# substrate-bip39 releases after the vulnerable commit's own Cargo.lock (0.4.4) moved to a
+# schnorrkel major that sp-core doesn't use, so an unpinned resolve pulls TWO incompatible
+# schnorrkel versions into one binary (E0308: "two different versions of the same crate").
+# Pin back to what the tree originally built against.
+substrate-bip39 = "=0.4.4"
+
+# Same story as zerocopy above: newer matrixmultiply (pulled in transitively via
+# frame-benchmarking's linear-regression deps) added AVX-512 kernels gated on the same
+# unstable target-feature the pinned nightly doesn't have enabled. Pin below that.
+matrixmultiply = "=0.3.2"
+
+[dependencies.pallet-bags-list]
+path = "../../frame/bags-list"
+features = ["fuzz", "runtime-benchmarks"]
+
+[dependencies.frame-election-provider-support]
+path = "../../frame/election-provider-support"
+features = ["runtime-benchmarks"]
+
+# pallet-bags-list pulls these in as OPTIONAL, default-features = false deps (its own [features]
+# fuzz/runtime-benchmarks lists just turn the deps on, without cascading "/std" — the original
+# honggfuzz harness got std transitively through the FULL substrate workspace's shared Cargo.lock,
+# which this standalone fuzz workspace does not have). Depend on them directly, with std (default
+# features), so cargo's resolver unifies std ON for these shared package instances everywhere they
+# appear in the graph (e.g. sp-core is also reached, std-off otherwise, via frame-support/sp-api).
+[dependencies.sp-core]
+path = "../../primitives/core"
+
+[dependencies.sp-io]
+path = "../../primitives/io"
+
+# Needed directly (not just transitively) so the fuzz target can build its own persistent
+# TestExternalities via frame_system::GenesisConfig — see fuzz_targets/bags-list.rs.
+[dependencies.frame-system]
+path = "../../frame/system"
+
+[dependencies.sp-tracing]
+path = "../../primitives/tracing"
+
+[dependencies.pallet-balances]
+path = "../../frame/balances"
+
+[dependencies.frame-benchmarking]
+path = "../../frame/benchmarking"
+
+[[bin]]
+name = "bags-list"
+path = "fuzz_targets/bags-list.rs"
+test = false
+doc = false
+
+# Standalone fuzz workspace — do NOT pull in the entire substrate workspace.
+[workspace]
+resolver = "2"
+members = ["."]

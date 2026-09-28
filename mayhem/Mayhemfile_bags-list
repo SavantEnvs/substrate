@@ -1,0 +1,13 @@
+# libFuzzer target — substrate pallet-bags-list harness, backported from the mayhemheroes bug
+# hunt (mayhemheroes/substrate target `bags-list`, run 9). Ported from the original honggfuzz
+# driver (frame/bags-list/fuzzer/src/main.rs) to the cargo-fuzz/libFuzzer form built by
+# mayhem/build.sh — see mayhem/fuzz/fuzz_targets/bags-list.rs.
+project: savantenvs/substrate
+target: bags-list-buggy-mhh-run-9
+duration: 300
+
+cmds:
+  - cmd: /mayhem/bags-list
+    libfuzzer: true
+
+# origin: https://app.mayhem.security/mayhemheroes/substrate/bags-list/9
